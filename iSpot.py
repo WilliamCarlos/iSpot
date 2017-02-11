@@ -77,11 +77,12 @@ h = frame.shape[0]
 #frame dimensions  (360, 640, 3)
 average = np.zeros_like(frame, dtype=np.float32);
 #for now, create temporal frame with 20 frames
-temporalCapture = capture
-ok, temporalFrame = temporalCapture.read()
+
+temporalCapture = cv2.VideoCapture(input_filename)
+ok, currentFrame = temporalCapture.read()
 for i in range(1, 20):
-    frameToAdd = temporalFrame.astype(np.float32)
-    average = np.add(average, temporalFrame)
+    frameToAdd = currentFrame.astype(np.float32)
+    average = np.add(average, currentFrame)
     print('calculating temporal frame ', i, 'th iteration', average)
 average = average/20
 print('final temporal frame ', average)
