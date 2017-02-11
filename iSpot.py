@@ -77,15 +77,14 @@ h = frame.shape[0]
 #frame dimensions  (360, 640, 3)
 average = np.zeros_like(frame, dtype=np.float32);
 #for now, create temporal frame with 20 frames
-#for i in range(1, 2):
-print('pre addition ', average)
-frameToAdd = frame.astype(np.float32)
-average = np.add(average, frame)
-print('post addition ', average)
-average = average/256
-#average = average*(1/20)
-
-
+temporalCapture = capture
+ok, temporalFrame = temporalCapture.read()
+for i in range(1, 20):
+    frameToAdd = temporalFrame.astype(np.float32)
+    average = np.add(average, temporalFrame)
+    print('calculating temporal frame ', i, 'th iteration', average)
+average = average/20
+print('final temporal frame ', average)
 
 
 
@@ -190,8 +189,8 @@ while 1:
         writer.write(frame)
     # Throw it up on the screen.
     cv2.imshow('Video', frame)    
-    cv2.imshow('average', average)
-
+    cv2.imshow('average', average.astype(np.uint8))
+#    pdb.set_trace()
 
 
     # Delay for 5ms and get a key
