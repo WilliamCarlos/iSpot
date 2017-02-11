@@ -114,19 +114,24 @@ while 1:
 
     #TODO: First, RGB threshold the hands out in this frame
         #we may need to do this with a mask? to preseve color in the other image
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    lower_blue = np.array([110,50,50])
-    upper_blue = np.array([130,255,255])
-    mask = cv2.inRange(frame, lower_blue, upper_blue)
-    res = cv2.bitwise_and(frame,frame, mask= mask)
-    cv2.imshow('frame',frame)
-    cv2.imshow('mask',mask)
-    cv2.imshow('res',res)
+    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    # lower_blue = np.array([210,212,210])
+    # upper_blue = np.array([130,255,255])
+    # mask = cv2.inRange(frame, lower_blue, upper_blue)
+    # res = cv2.bitwise_and(frame,frame, mask= mask)
+    # cv2.imshow('frame',frame)
+    # cv2.imshow('mask',mask)
+    # cv2.imshow('res',res)
 
         
 
     #TODO: Here, do temporal threholding to remove all except the bar (non-glove part of arms will likely stay too)
 
+    #do temporal averaging on the first few frames of 125_5x_lf_lowres.mov
+        #create comparison frame by averaging the first few of the movie
+        #find the difference (absdiff) of every frame and that comparison frame
+        #create a mask where only large differences are kept
+        #profit??
 
     #TODO: Morphological Operators to remove noise
 
