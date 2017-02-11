@@ -23,6 +23,7 @@ import cv2
 import numpy as np
 import sys
 import struct
+import pdb
 
 # Figure out what input we should load:
 input_device = None
@@ -69,11 +70,48 @@ if not ok or frame is None:
 #TODO: insert temporal averaging code here
 
 
-
-
-# Now set up a VideoWriter to output video.
 w = frame.shape[1]
 h = frame.shape[0]
+
+##Create the averaged frame
+#frame dimensions  (360, 640, 3)
+average = np.zeros_like(frame, dtype=np.float32);
+#for now, create temporal frame with 20 frames
+#for i in range(1, 2):
+print('pre addition ', average)
+frameToAdd = frame.astype(np.float32)
+average = np.add(average, frame)
+print('post addition ', average)
+average = average/256
+#average = average*(1/20)
+
+
+
+
+
+#pdb.set_trace()
+
+# while 1:
+#     ok, frame = capture.read(frame) 
+
+#     # Bail if none.
+#     if not ok or frame is None:
+#         print('Aborting in temporal average calculation')
+#         break
+
+#     if writer:
+#         writer.write(frame)
+#     # Throw it up on the screen.
+#     cv2.imshow('Video', frame)
+
+
+#     # Delay for 5ms and get a key
+#     k = cv2.waitKey(5)
+#     # Check for ESC hit:
+#     if k % 0x100 == 27:
+#         break
+
+# Now set up a VideoWriter to output video. (dependent on w, h above)
 
 fps = 30 #do we want to downgrade? 
 
@@ -94,6 +132,7 @@ else:
 
 # Loop until movie is ended or user hits ESC:
 frameNumber=0;
+cv2.imshow('frame', frame)
 while 1:
 
     # Get the frame.
@@ -108,7 +147,8 @@ while 1:
     ################################################################################################
     #                     ve vill do ze computations ere! (modify the current frame)               #
     ################################################################################################
-    print('ve vill do ze computations ere! ', frameNumber)
+    #print('ve vill do ze computations ere! ', frameNumber)
+    #print('frame size', w, ' ', h, "frame dimensions ", frame.shape)
 
 
 
@@ -126,6 +166,7 @@ while 1:
         
 
     #TODO: Here, do temporal threholding to remove all except the bar (non-glove part of arms will likely stay too)
+
 
     #do temporal averaging on the first few frames of 125_5x_lf_lowres.mov
         #create comparison frame by averaging the first few of the movie
@@ -148,7 +189,8 @@ while 1:
     if writer:
         writer.write(frame)
     # Throw it up on the screen.
-    cv2.imshow('Video', frame)
+    cv2.imshow('Video', frame)    
+    cv2.imshow('average', average)
 
 
 
