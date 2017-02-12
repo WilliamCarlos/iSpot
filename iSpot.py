@@ -26,6 +26,36 @@ import struct
 import pdb
 import cvk2
 
+
+def warnToSpot(i):
+    text = "Warning: Lifter needs a spot!"# + str(i)
+    text_pos = (16, h-16)                # (x, y) location of text
+    font_face = cv2.FONT_HERSHEY_SIMPLEX # identifier of font to use
+    font_size = 1.0                      # scale factor for text
+    
+    bg_color = (0, 0, 0)       # RGB color for black
+    bg_size = 3                # background is bigger than foreground
+    
+    fg_color = (255, 255, 255) # RGB color for white
+    fg_size = 1                # foreground is smaller than background
+
+    line_style = cv2.LINE_AA   # make nice anti-aliased text
+
+    # Draw background text (outline)
+    cv2.putText(display, text, text_pos,
+                font_face, font_size,
+                bg_color, bg_size, line_style)
+
+    # Draw foreground text (middle)
+    cv2.putText(display, text, text_pos,
+                font_face, font_size,
+                fg_color, fg_size, line_style)
+
+    # Put the image on the screen
+    cv2.imshow('Regions', display)
+
+
+
 # Figure out what input we should load:
 input_device = None
 
@@ -121,9 +151,12 @@ frameNumber=0;
 #                                    Place computations here                                   #
 ################################################################################################
 
+barCentroids = [] #keep track of previous bar centroids
+velocity = []
+#velocity = np.empty(0)
 while 1:
     frameNumber = frameNumber + 1 #increment frameNumber
-    print(frameNumber)
+    print('frame number ', frameNumber)
     # Get the frame.
     ok, frame = capture.read(frame)
     # Bail if none.
@@ -235,12 +268,26 @@ while 1:
     # of different colors to color things in with.
     ccolors = cvk2.getccolors()
 
+    #define colors for trail
+    trail = [(255, 255, 255),
+    (240, 240, 240),
+    (225, 225, 225),
+    (210, 210, 210),
+    (195, 195, 195),
+    (180, 180, 180),
+    (165, 165, 165),
+    (150, 150, 150),
+    (135, 135, 135),
+    (120, 120, 120),
+    (105, 105, 105)]
     # Define the color white (used below).
     white = (255,255,255)
     pink = (247,116,182)
     green = (80,161,80)
+    red = (239,51,11)
     # For each contour in the image
     centroids = []
+    
     for j in range(len(contours)):
 
         # Draw the contour as a colored region on the display image.
@@ -270,10 +317,45 @@ while 1:
 
     #midpoint between the centroids of the hands
     midpoint = cvk2.array2cv_int(0.5*(centroids[0]+centroids[1]))
-    cv2.circle( display, midpoint, 3, white, 1, cv2.LINE_AA )
-    # pdb.set_trace()
+    
+    #keep track of previous bar centroids to calculate bar velocities
+    barCentroids.append(midpoint)
+    #cv2.circle( display, midpoint, 3, white, 1, cv2.LINE_AA )
+
+    for i in range(0,len(barCentroids)):
+        if frameNumber <= 10:
+            #numCircles = frameNumber-1
+            numCircles = 0
+            velocity.append(0.0)
+        else:
+            numCircles = 10
+            #pdb.set_trace()
+
+            position1 = barCentroids[len(centroids)-1]
+            position2 = barCentroids[len(centroids)-10]
+            #velocity.append(position1-position2)
+            position = np.subtract(position1,position2)
+            velocity.append((position[0]*position[0]+position[1]*position[1])**0.5)
+#            pdb.set_trace()
+            if velocity[len(velocity)-1] < 5:               
+                warnToSpot(velocity[i])
+            else:
+                print('The lift is good')
+                #do nothing
+
+        for k in range(1, numCircles):
+            #cv2.circle(display, barCentroids[len(centroids)-numCircles-1], 1, white, 1, cv2.LINE_AA )
+            cv2.circle(display, barCentroids[len(centroids)-numCircles-1], 1, trail[10-k], 1, cv2.LINE_AA )
+            numCircles = numCircles-1
+        # while(numCircles>0):
+        #     cv2.circle(display, barCentroids[len(centroids)-numCircles], 2, white, 1, cv2.LINE_AA )
+        #     numCircles = numCircles-1
+
+    
+    # pdb.set_trace()p
     cv2.imshow('Regions', display)
 
+    
     # cv2.imshow('Contours', contours)
 
     ################################################################################################
@@ -299,3 +381,7 @@ while 1:
     # Check for ESC hit:
     if k % 0x100 == 27:
         break
+#print('Bar centroids: ', barCentroids)
+velocity.sort(reverse=True)
+print('Velocities', velocity)
+pdb.set_trace()
