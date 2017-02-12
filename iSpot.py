@@ -237,8 +237,10 @@ while 1:
 
     # Define the color white (used below).
     white = (255,255,255)
-
+    pink = (247,116,182)
+    green = (80,161,80)
     # For each contour in the image
+    centroids = []
     for j in range(len(contours)):
 
         # Draw the contour as a colored region on the display image.
@@ -251,7 +253,8 @@ while 1:
         mu = info['mean']
         b1 = info['b1']
         b2 = info['b2']
-
+        centroids.append(mu)
+        # pdb.set_trace()
         # Annotate the display image with mean and basis vectors.
         cv2.circle( display, cvk2.array2cv_int(mu), 3, white, 1, cv2.LINE_AA )
 
@@ -259,9 +262,16 @@ while 1:
                   white, 1, cv2.LINE_AA )
 
         cv2.line( display, cvk2.array2cv_int(mu), cvk2.array2cv_int(mu+2*b2),
-                  white, 1, cv2.LINE_AA )
-
+                  white, 1, cv2.LINE_AA )        
     # Display the output image and wait for a keypress.
+
+    #draw line between centroids
+    cv2.line(display, cvk2.array2cv_int(centroids[0]), cvk2.array2cv_int(centroids[1]), pink, 1, cv2.LINE_AA)
+
+    #midpoint between the centroids of the hands
+    midpoint = cvk2.array2cv_int(0.5*(centroids[0]+centroids[1]))
+    cv2.circle( display, midpoint, 3, white, 1, cv2.LINE_AA )
+    # pdb.set_trace()
     cv2.imshow('Regions', display)
 
     # cv2.imshow('Contours', contours)
