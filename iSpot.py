@@ -24,6 +24,7 @@ import numpy as np
 import sys
 import struct
 import pdb
+import cvk2
 
 # Figure out what input we should load:
 input_device = None
@@ -135,6 +136,7 @@ while 1:
 
     #TODO: First, RGB threshold the hands out in this frame
         #we may need to do this with a mask? to preseve color in the other image
+    video = frame
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     # lower_blue = np.array([210,212,210])
@@ -170,9 +172,15 @@ while 1:
 
 
     #TODO: Here, do temporal threholding to remove all except the bar (non-glove part of arms will likely stay too)
-    grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(np.float32)
-    grayAverage = cv2.cvtColor(average, cv2.COLOR_BGR2GRAY).astype(np.float32)
-    diffMatrix = cv2.absdiff(grayAverage, grayFrame).astype(np.float32)
+    # grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    # grayAverage = cv2.cvtColor(average, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    # diffMatrix = cv2.absdiff(grayAverage, grayFrame).astype(np.float32)
+
+
+    diffMatrixRGB = cv2.absdiff(frame.astype(np.float32), average)#.max(axis=2)
+
+    diffMatrix = cv2.cvtColor(diffMatrixRGB, cv2.COLOR_BGR2GRAY)
+    print(diffMatrix)  
 
 
 
@@ -195,20 +203,63 @@ while 1:
     kernel = np.ones((10,10), np.uint8)
     erosion = cv2.erode(mask,kernel,iterations = 1)
     dilation = cv2.dilate(mask,kernel,iterations = 1)
-    cv2.imshow('Erosion',erosion)
-    cv2.imshow('Dilation',dilation)
+    # cv2.imshow('Erosion',erosion)
+    # cv2.imshow('Dilation',dilation)
     opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     closing = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    cv2.imshow('Opening',opening)
-    cv2.imshow('Closing',closing)
+    # cv2.imshow('Opening',opening)
+    # cv2.imshow('Closing',closing)
 
 
     #TODO: Connected Components Analysis
+    bimodalImg = opening.copy()
         #Find the centroid of the bar. Track it's (x,y) over time.
-        #Find the velocity of the centroid of the bar. Track it over time.
-    image, contours, hierarchy = cv2.findContours(frame, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+        #Find the velocity of the centroid of the bar. Track it over time
+        # Create an RGB display image which to show the different regions.
+    display = np.zeros((bimodalImg.shape[0], bimodalImg.shape[1], 3),
+                      dtype='uint8')
 
-    cv2.imshow('Contours', contours)
+    # Get the list of contours in the image. See OpenCV docs for
+    # information about the arguments.
+    bimodalImg, contours, hierarchy = cv2.findContours(bimodalImg, cv2.RETR_CCOMP,
+                                              cv2.CHAIN_APPROX_SIMPLE)
+
+    print('found', len(contours), 'contours')
+
+    # The getccolors function from cvk2 supplies a useful list
+    # of different colors to color things in with.
+    ccolors = cvk2.getccolors()
+
+    # Define the color white (used below).
+    white = (255,255,255)
+
+    # For each contour in the image
+    for j in range(len(contours)):
+
+        # Draw the contour as a colored region on the display image.
+        cv2.drawContours(display, contours, j, ccolors[j % len(ccolors)], -1 )
+
+        # Compute some statistics about this contour.
+        info = cvk2.getcontourinfo(contours[j])
+
+        # Mean location and basis vectors can be useful.
+        mu = info['mean']
+        b1 = info['b1']
+        b2 = info['b2']
+
+        # Annotate the display image with mean and basis vectors.
+        cv2.circle( display, cvk2.array2cv_int(mu), 3, white, 1, cv2.LINE_AA )
+        
+        cv2.line( display, cvk2.array2cv_int(mu), cvk2.array2cv_int(mu+2*b1),
+                  white, 1, cv2.LINE_AA )
+        
+        cv2.line( display, cvk2.array2cv_int(mu), cvk2.array2cv_int(mu+2*b2),
+                  white, 1, cv2.LINE_AA )
+
+    # Display the output image and wait for a keypress.
+    cv2.imshow('Regions', display)
+
+    # cv2.imshow('Contours', contours)
 
     ################################################################################################
     #                          Write the newly modified frame to the writer                        #
@@ -217,7 +268,7 @@ while 1:
     if writer:
         writer.write(frame)
     # Throw it up on the screen.
-    # cv2.imshow('Video', frame)
+    cv2.imshow('Video', video)
     # cv2.imshow('average', average.astype(np.uint8))
     # cv2.imshow('diff matrix', diffMatrix.astype(np.uint8))
     # cv2.imshow('Gray Average', grayAverage.astype(np.uint8))
