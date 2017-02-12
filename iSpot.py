@@ -193,10 +193,10 @@ while 1:
 
     #TODO: Morphological Operators to remove noise
     kernel = np.ones((10,10), np.uint8)
-    # erosion = cv2.erode(mask,kernel,iterations = 1)
-    # dilation = cv2.dilate(mask,kernel,iterations = 1)
-    # cv2.imshow('Erosion',erosion)
-    # cv2.imshow('Dilation',dilation)
+    erosion = cv2.erode(mask,kernel,iterations = 1)
+    dilation = cv2.dilate(mask,kernel,iterations = 1)
+    cv2.imshow('Erosion',erosion)
+    cv2.imshow('Dilation',dilation)
     opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     closing = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     cv2.imshow('Opening',opening)
@@ -206,8 +206,9 @@ while 1:
     #TODO: Connected Components Analysis
         #Find the centroid of the bar. Track it's (x,y) over time.
         #Find the velocity of the centroid of the bar. Track it over time.
+    image, contours, hierarchy = cv2.findContours(frame, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
-
+    cv2.imshow('Contours', contours)
 
     ################################################################################################
     #                          Write the newly modified frame to the writer                        #
@@ -218,11 +219,11 @@ while 1:
     # Throw it up on the screen.
     # cv2.imshow('Video', frame)
     # cv2.imshow('average', average.astype(np.uint8))
-    cv2.imshow('diff matrix', diffMatrix.astype(np.uint8))
-    cv2.imshow('Gray Average', grayAverage.astype(np.uint8))
-    cv2.imshow('Gray Frame', grayFrame.astype(np.uint8))
+    # cv2.imshow('diff matrix', diffMatrix.astype(np.uint8))
+    # cv2.imshow('Gray Average', grayAverage.astype(np.uint8))
+    # cv2.imshow('Gray Frame', grayFrame.astype(np.uint8))
     # cv2.imshow('Temporal Threshold', temporalThreshold.astype(np.uint8))
-    cv2.imshow('absdiff', diffMatrix.astype(np.uint8))
+    # cv2.imshow('absdiff', diffMatrix.astype(np.uint8))
 
 #    pdb.set_trace()
 
