@@ -263,43 +263,16 @@ while 1:
     #Use barCentroids to keep track of previous bar centroids to calculate bar velocities
     barCentroids.append(midpoint)
     
-    #
+    #Draw the barCentroid trail
     for i in range(0,len(barCentroids)):
         #if less than 10 frames have elapsed, say velocity is 0 and don't paint any circles
         #(not going to need a spot 10 frames in, and avoids edge cases this way)
         if frameNumber <= 10:
             numCircles = 0
-            velocity.append(0)
         else:
             #otherwise, we draw a trail composed of 10 circles
             numCircles = 10
             #pdb.set_trace()
-            if frameNumber<100:
-                #if less than 100 frames have elapsed, we calculate velocity as distance changed over 10 frames
-                position1 = barCentroids[len(barCentroids)-1]
-                position2 = barCentroids[len(barCentroids)-10]
-            else:
-                #if more than 100 frames have elapsed, we calculate the velocity as distance changed over 50 frames
-                position1 = barCentroids[len(barCentroids)-1]
-                position2 = barCentroids[len(barCentroids)-100]
-
-            #Calculate the velocity of the barcentroid at the current frame            
-            position = np.subtract(position1,position2)
-            velocity.append(np.sqrt((position[0]*position[0]+position[1]*position[1])))
-            print('actual velocity ', np.sqrt((position[0]*position[0]+position[1]*position[1])))
-            #velocity.append((position[0]*position[0]+position[1]*position[1]))
-
-            #pdb.set_trace()
-            #40 is the spotting aggressiveness
-            #if velocity[len(velocity)-1] < 40:               
-            if velocity[frameNumber] < 1.5:               
-                warnToSpot()
-                #print('velocity, ', velocity[frameNumber])
-            else:
-                #print('velocity, ', velocity[frameNumber])
-                print()
-                #do nothing
-
         for k in range(1, numCircles):
             #cv2.circle(display, barCentroids[len(centroids)-numCircles-1], 1, white, 1, cv2.LINE_AA )
             cv2.circle(display, barCentroids[len(centroids)-numCircles-1], 1, trail[10-k], 1, cv2.LINE_AA )
@@ -307,6 +280,42 @@ while 1:
         # while(numCircles>0):
         #     cv2.circle(display, barCentroids[len(centroids)-numCircles], 2, white, 1, cv2.LINE_AA )
         #     numCircles = numCircles-1
+    #Calculate Velocity of the Bar in this frame
+    
+    #if less than 10 frames have elapsed, say velocity is 0 and don't paint any circles
+    #(not going to need a spot 10 frames in, and avoids edge cases this way)
+    if frameNumber <= 10:
+        velocity.append(0)
+    else:
+        if frameNumber<100:
+            #if less than 100 frames have elapsed, we calculate velocity as distance changed over 10 frames
+            position1 = barCentroids[len(barCentroids)-1]
+            position2 = barCentroids[len(barCentroids)-10]
+        else:
+            #if more than 100 frames have elapsed, we calculate the velocity as distance changed over 50 frames
+            position1 = barCentroids[len(barCentroids)-1]
+            position2 = barCentroids[len(barCentroids)-20]
+
+        #Calculate the velocity of the barcentroid at the current frame            
+        position = np.subtract(position1,position2)
+        #velocity.append(np.sqrt((position[0]*position[0]+position[1]*position[1])))
+        velocity.append(np.sqrt((position[0]*position[0]+position[1]*position[1])))
+        #print('actual velocity ', np.sqrt((position[0]*position[0]+position[1]*position[1])))
+        #print('velocity array: frame# ', frameNumber, ' length of array: ', len(velocity), ' velocity val ', velocity[frameNumber])
+        #velocity.append((position[0]*position[0]+position[1]*position[1]))
+
+        #pdb.set_trace()
+        #40 is the spotting aggressiveness
+        #if velocity[len(velocity)-1] < 40:               
+        print('VELOCITY!! ', velocity[frameNumber-1])
+        if velocity[frameNumber-1] < 10:               
+            warnToSpot()
+            #print('velocity, ', velocity[frameNumber])
+        else:
+            #print('velocity, ', velocity[frameNumber])
+            print()
+            #do nothing
+    
 
     
     # pdb.set_trace()p
