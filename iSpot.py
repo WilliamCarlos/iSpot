@@ -149,14 +149,14 @@ while 1:
     # lower_blue = np.array([0,90,140])
     # upper_blue = np.array([130,255,255])
 
-    # Get Bar Only
-    lower_blue = np.array([0,90,140])
-    upper_blue = np.array([130,255,255])
+    # Get Arm Only Or Skin Only
+    lower_blue = np.array([0,90,110])
+    upper_blue = np.array([50,255,255])
 
     mask = cv2.inRange(frame, lower_blue, upper_blue)
     mask = 255-mask
-    res = cv2.bitwise_and(frame,frame, mask= mask)
-
+    # res = cv2.bitwise_and(frame,frame, mask= mask)
+    #
     cv2.imshow('mask',mask)
     # cv2.imshow('res',res)
     # cv2.imshow('frame',frame)
@@ -207,9 +207,9 @@ while 1:
     #cv2.imshow('average', average.astype(np.uint8))
     #cv2.imshow('diff matrix', diffMatrix.astype(np.uint8))
     #cv2.imshow('Gray Average', grayAverage.astype(np.uint8))
-    cv2.imshow('Gray Frame', grayFrame.astype(np.uint8))
-    cv2.imshow('Temporal Threshold', temporalThreshold.astype(np.uint8))
-    cv2.imshow('absdiff', diffMatrix.astype(np.uint8))
+    # cv2.imshow('Gray Frame', grayFrame.astype(np.uint8))
+    # cv2.imshow('Temporal Threshold', temporalThreshold.astype(np.uint8))
+    # cv2.imshow('absdiff', diffMatrix.astype(np.uint8))
 
 #    pdb.set_trace()
 
