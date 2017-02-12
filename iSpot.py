@@ -27,38 +27,15 @@ import pdb
 import cvk2
 
 
-def warnToSpot(i):
-    text = "Warning: Lifter needs a spot!"# + str(i)
-    text_pos = (16, h-16)                # (x, y) location of text
-    font_face = cv2.FONT_HERSHEY_SIMPLEX # identifier of font to use
-    font_size = 1.0                      # scale factor for text
-    
-    bg_color = (0, 0, 0)       # RGB color for black
-    bg_size = 3                # background is bigger than foreground
-    
-    fg_color = (255, 255, 255) # RGB color for white
-    fg_size = 1                # foreground is smaller than background
-
-    line_style = cv2.LINE_AA   # make nice anti-aliased text
-
-    # Draw background text (outline)
-    cv2.putText(display, text, text_pos,
-                font_face, font_size,
-                bg_color, bg_size, line_style)
-
-    # Draw foreground text (middle)
-    cv2.putText(display, text, text_pos,
-                font_face, font_size,
-                fg_color, fg_size, line_style)
-
-    # Put the image on the screen
-    cv2.imshow('Regions', display)
+#Displays a message on screen, warning the user to spot the lifter
+def warnToSpot():  
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    cv2.putText(display,'Warning: Lifter needs a spot!',(75,75), font, 1,(255,255,255),2)
 
 
 
 # Figure out what input we should load:
 input_device = None
-
 if len(sys.argv) > 1:
     input_filename = sys.argv[1]
     try:
@@ -71,7 +48,6 @@ else:
     print('  python', sys.argv[0], '0')
     print()
     input_filename = 'bunny.mp4'
-
 # Choose camera or file, depending upon whether device was set:
 if input_device is not None:
     capture = cv2.VideoCapture(input_device)
@@ -86,21 +62,12 @@ else:
 if not capture or not capture.isOpened():
     print('Error opening video capture!')
     sys.exit(1)
-
 # Fetch the first frame and bail if none.
 ok, frame = capture.read()
-
 if not ok or frame is None:
     print('No frames in video')
     sys.exit(1)
-
-
-################################################################################################
-#      First frame selected here. ve vill do ze temporal thresholding computations ere!        #
-################################################################################################
-#TODO: insert temporal averaging code here
-
-
+#Grab width/height
 w = frame.shape[1]
 h = frame.shape[0]
 
@@ -108,32 +75,31 @@ h = frame.shape[0]
 #                      Create the average frame for temporal thresholding                      #
 ################################################################################################
 
+#NOTE: IGNORE THIS COMMENTED BLOCK. We were going to use temporal thresholding as well but decided not to
+#after RGB worked well. Leaving code here so I can look at it again later. 
+
 ##Create the averaged frame
 #frame dimensions  (360, 640, 3)
-average = np.zeros_like(frame, dtype=np.float32);
+#average = np.zeros_like(frame, dtype=np.float32);
 
 #for now, create temporal frame with 20 frames
-temporalCapture = cv2.VideoCapture(input_filename)
-ok, currentFrame = temporalCapture.read()
-for i in range(1, 20):
-    frameToAdd = currentFrame.astype(np.float32)
-    average = np.add(average, currentFrame)
-    okT, currentFrame = temporalCapture.read(currentFrame)
+#temporalCapture = cv2.VideoCapture(input_filename)
+#ok, currentFrame = temporalCapture.read()
+#for i in range(1, 20):
+#    frameToAdd = currentFrame.astype(np.float32)
+#    average = np.add(average, currentFrame)
+#    okT, currentFrame = temporalCapture.read(currentFrame)
 
      #print('calculating temporal frame ', i, 'th iteration', average)
-average = average/20
+#average = average/20
 #print('final temporal frame ', average)
 
 ################################################################################################
 
 # Now set up a VideoWriter to output video. (dependent on w, h above)
-
 fps = 30 #do we want to downgrade?
-
 # One of these combinations should hopefully work on your platform:
 #fourcc, ext = (cv2.VideoWriter_fourcc('D', 'I', 'V', 'X'), 'avi')
-
-#huh, so .mov should work
 fourcc, ext = (cv2.VideoWriter_fourcc('M', 'P', '4', 'V'), 'mov')
 filename = 'captured.'+ext
 writer = cv2.VideoWriter(filename, fourcc, fps, (w, h))
@@ -143,7 +109,6 @@ else:
     print('Opened', filename, 'for output.')
     writer.write(frame)
 # Loop until movie is ended or user hits ESC:
-frameNumber=0;
 
 
 
@@ -151,9 +116,11 @@ frameNumber=0;
 #                                    Place computations here                                   #
 ################################################################################################
 
-barCentroids = [] #keep track of previous bar centroids
-velocity = []
-#velocity = np.empty(0)
+#The bar centroid is defined as the midpoint of the line connecting the centroids of both hands (drawn with white dots in the video)
+#We use the bar centroids to approximate the speed of the bar and determien if the lifter needs a spot (when the velocity is close to 0)
+barCentroids = [] #Keep track of the locations of previous bar centroids. Used to calculate bar velocity.
+velocity = [] #Stores the velocities of the bar centroids. (not actual velocity, but a relatively close measure: distance between position at time x and position at time y (not normalized for time))
+frameNumber=0; #Used to keep track of the frame number of the video 
 while 1:
     frameNumber = frameNumber + 1 #increment frameNumber
     print('frame number ', frameNumber)
@@ -167,21 +134,18 @@ while 1:
         print('Bad frame in video! Aborting!')
         break
 
-    #TODO: First, RGB threshold the hands out in this frame
-        #we may need to do this with a mask? to preseve color in the other image
+    #RGB thresholding to isolate the hands in the frame
     video = frame
+    #convert to HSV
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    # lower_blue = np.array([210,212,210])
-    # upper_blue = np.array([130,255,255])
+        
+    # Range of colors to Get Only Gloves without Weights. Other thresholding options commented below. 
+    lower_blue = np.array([85,70,20])
+    upper_blue = np.array([100,255,255])
 
     # To Get Only Gloves
     # lower_blue = np.array([85,70,20])
     # upper_blue = np.array([130,255,255])
-
-    # To Get Only Gloves without Weights
-    lower_blue = np.array([85,70,20])
-    upper_blue = np.array([100,255,255])
 
     # To Get Dumbbells and Gloves
     # lower_blue = np.array([40,80,20])
@@ -195,11 +159,12 @@ while 1:
     # lower_blue = np.array([0,90,110])
     # upper_blue = np.array([50,255,255])
 
+    #RGB threshold using a mask and our color ranges
     mask = cv2.inRange(frame, lower_blue, upper_blue)
-    # mask = 255-mask
     res = cv2.bitwise_and(frame,frame, mask= mask)
-    #
     cv2.imshow('mask',mask)
+
+    #TODO: Don't think we need this anymore. Delete? 
     # cv2.imshow('res',res)
     # cv2.imshow('frame',frame)
     # cv2.imshow("h", frame[:,:,0])
@@ -207,53 +172,35 @@ while 1:
     # cv2.imshow("v", frame[:,:,2])
 
 
-
-    #TODO: Here, do temporal threholding to remove all except the bar (non-glove part of arms will likely stay too)
+    #CODE TO DO TEMPORAL THRESHOLDING. Please ignore, leaving commneted here so I can look at it again later. 
+    #Here, do temporal threholding to remove all except the bar (non-glove part of arms will likely stay too)
     # grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(np.float32)
     # grayAverage = cv2.cvtColor(average, cv2.COLOR_BGR2GRAY).astype(np.float32)
     # diffMatrix = cv2.absdiff(grayAverage, grayFrame).astype(np.float32)
-
-
-    diffMatrixRGB = cv2.absdiff(frame.astype(np.float32), average)#.max(axis=2)
-
-    diffMatrix = cv2.cvtColor(diffMatrixRGB, cv2.COLOR_BGR2GRAY)
-    print(diffMatrix)
-
-
-
-#    temporalThreshold = np.zeros_like(average)
-#    temporalThreshold= cv2.threshold(diffMatrix, 50, cv2.THRESH_BINARY)
-
-    ##trippy af bruh
+    #diffMatrixRGB = cv2.absdiff(frame.astype(np.float32), average)#.max(axis=2)
+    #diffMatrix = cv2.cvtColor(diffMatrixRGB, cv2.COLOR_BGR2GRAY)
+    #temporalThreshold = np.zeros_like(average)
+    #temporalThreshold= cv2.threshold(diffMatrix, 50, cv2.THRESH_BINARY)
     #temporalThreshold= cv2.threshold(diffMatrix, 0, 255, cv2.THRESH_BINARY)
+    #something, temporalThreshold = cv2.threshold(diffMatrix, 15, 255, cv2.THRESH_BINARY)
 
-    something, temporalThreshold = cv2.threshold(diffMatrix, 15, 255, cv2.THRESH_BINARY)
-    print(diffMatrix)
-
-    #do temporal averaging on the first few frames of 125_5x_lf_lowres.mov
-        #create comparison frame by averaging the first few of the movie
-        #find the difference (absdiff) of every frame and that comparison frame
-        #create a mask where only large differences are kept
-        #profit??
-
-    #TODO: Morphological Operators to remove noise
+    #TODO: Take screenshots of morphological operators and then delete extraneous cv2.__ when done.
+    #Here, we use morphological Operators to remove noise
     kernel = np.ones((10,10), np.uint8)
     erosion = cv2.erode(mask,kernel,iterations = 1)
     dilation = cv2.dilate(mask,kernel,iterations = 1)
     # cv2.imshow('Erosion',erosion)
     # cv2.imshow('Dilation',dilation)
-    opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel) #this is the morphological operator we used
     closing = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     # cv2.imshow('Opening',opening)
     # cv2.imshow('Closing',closing)
 
 
-    #TODO: Connected Components Analysis
+    #Here, we do connected Components Analysis
+    #Make a copy of the frame cleaned by morphological operators to perform connected components analysis on
     bimodalImg = opening.copy()
-        #Find the centroid of the bar. Track it's (x,y) over time.
-
-        #Find the velocity of the centroid of the bar. Track it over time
-        # Create an RGB display image which to show the different regions.
+    #initalize display w/ zeros
     display = np.zeros((bimodalImg.shape[0], bimodalImg.shape[1], 3),
                       dtype='uint8')
 
@@ -268,7 +215,8 @@ while 1:
     # of different colors to color things in with.
     ccolors = cvk2.getccolors()
 
-    #define colors for trail
+    #define colors for the trail left behind by the centroid (we paint the location of the previous)
+    #10 centroids, with older locations being a darker shade of white to have a "trail" effect
     trail = [(255, 255, 255),
     (240, 240, 240),
     (225, 225, 225),
@@ -280,67 +228,76 @@ while 1:
     (135, 135, 135),
     (120, 120, 120),
     (105, 105, 105)]
-    # Define the color white (used below).
+
+    # Define the color white, pink, red (used below).
     white = (255,255,255)
     pink = (247,116,182)
-    green = (80,161,80)
-    red = (239,51,11)
-    # For each contour in the image
+  
+    #We expect to have 2 contours in our image (1 for each hand). Store their centroids in this array
+    #so we can later access their centroids and connect them with a line.
     centroids = []
-    
+    # For each contour in the image
     for j in range(len(contours)):
-
         # Draw the contour as a colored region on the display image.
         cv2.drawContours(display, contours, j, ccolors[j % len(ccolors)], -1 )
-
         # Compute some statistics about this contour.
         info = cvk2.getcontourinfo(contours[j])
-
         # Mean location and basis vectors can be useful.
         mu = info['mean']
         b1 = info['b1']
         b2 = info['b2']
-        centroids.append(mu)
-        # pdb.set_trace()
+        centroids.append(mu) #Add the centroid coordinate to our centroids array
+
         # Annotate the display image with mean and basis vectors.
         cv2.circle( display, cvk2.array2cv_int(mu), 3, white, 1, cv2.LINE_AA )
-
         cv2.line( display, cvk2.array2cv_int(mu), cvk2.array2cv_int(mu+2*b1),
                   white, 1, cv2.LINE_AA )
-
         cv2.line( display, cvk2.array2cv_int(mu), cvk2.array2cv_int(mu+2*b2),
                   white, 1, cv2.LINE_AA )        
-    # Display the output image and wait for a keypress.
-
     #draw line between centroids
     cv2.line(display, cvk2.array2cv_int(centroids[0]), cvk2.array2cv_int(centroids[1]), pink, 1, cv2.LINE_AA)
 
-    #midpoint between the centroids of the hands
+    #calculate the midpoint between the centroids of the hands
     midpoint = cvk2.array2cv_int(0.5*(centroids[0]+centroids[1]))
     
-    #keep track of previous bar centroids to calculate bar velocities
+    #Use barCentroids to keep track of previous bar centroids to calculate bar velocities
     barCentroids.append(midpoint)
-    #cv2.circle( display, midpoint, 3, white, 1, cv2.LINE_AA )
-
+    
+    #
     for i in range(0,len(barCentroids)):
+        #if less than 10 frames have elapsed, say velocity is 0 and don't paint any circles
+        #(not going to need a spot 10 frames in, and avoids edge cases this way)
         if frameNumber <= 10:
-            #numCircles = frameNumber-1
             numCircles = 0
-            velocity.append(0.0)
+            velocity.append(0)
         else:
+            #otherwise, we draw a trail composed of 10 circles
             numCircles = 10
             #pdb.set_trace()
-
-            position1 = barCentroids[len(centroids)-1]
-            position2 = barCentroids[len(centroids)-10]
-            #velocity.append(position1-position2)
-            position = np.subtract(position1,position2)
-            velocity.append((position[0]*position[0]+position[1]*position[1])**0.5)
-#            pdb.set_trace()
-            if velocity[len(velocity)-1] < 5:               
-                warnToSpot(velocity[i])
+            if frameNumber<100:
+                #if less than 100 frames have elapsed, we calculate velocity as distance changed over 10 frames
+                position1 = barCentroids[len(barCentroids)-1]
+                position2 = barCentroids[len(barCentroids)-10]
             else:
-                print('The lift is good')
+                #if more than 100 frames have elapsed, we calculate the velocity as distance changed over 50 frames
+                position1 = barCentroids[len(barCentroids)-1]
+                position2 = barCentroids[len(barCentroids)-100]
+
+            #Calculate the velocity of the barcentroid at the current frame            
+            position = np.subtract(position1,position2)
+            velocity.append(np.sqrt((position[0]*position[0]+position[1]*position[1])))
+            print('actual velocity ', np.sqrt((position[0]*position[0]+position[1]*position[1])))
+            #velocity.append((position[0]*position[0]+position[1]*position[1]))
+
+            #pdb.set_trace()
+            #40 is the spotting aggressiveness
+            #if velocity[len(velocity)-1] < 40:               
+            if velocity[frameNumber] < 1.5:               
+                warnToSpot()
+                #print('velocity, ', velocity[frameNumber])
+            else:
+                #print('velocity, ', velocity[frameNumber])
+                print()
                 #do nothing
 
         for k in range(1, numCircles):
