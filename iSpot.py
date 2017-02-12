@@ -2,7 +2,7 @@
 #
 # File:   iSpot.py
 # Author: William Lee (and Won Chung) (w/ code taken from Matt Zucker's capture.py)
-# Date:   February, 2017 
+# Date:   February, 2017
 #
 # Written for ENGR 27 - Computer Vision
 #
@@ -31,7 +31,7 @@ input_device = None
 if len(sys.argv) > 1:
     input_filename = sys.argv[1]
     try:
-        input_device = int(input_filename) 
+        input_device = int(input_filename)
     except:
         pass
 else:
@@ -63,6 +63,13 @@ if not ok or frame is None:
     print('No frames in video')
     sys.exit(1)
 
+
+################################################################################################
+#      First frame selected here. ve vill do ze temporal thresholding computations ere!        #
+################################################################################################
+#TODO: insert temporal averaging code here
+
+
 w = frame.shape[1]
 h = frame.shape[0]
 
@@ -80,7 +87,7 @@ ok, currentFrame = temporalCapture.read()
 for i in range(1, 20):
     frameToAdd = currentFrame.astype(np.float32)
     average = np.add(average, currentFrame)
-    okT, currentFrame = temporalCapture.read(currentFrame) 
+    okT, currentFrame = temporalCapture.read(currentFrame)
 
      #print('calculating temporal frame ', i, 'th iteration', average)
 average = average/20
@@ -90,7 +97,7 @@ average = average/20
 
 # Now set up a VideoWriter to output video. (dependent on w, h above)
 
-fps = 30 #do we want to downgrade? 
+fps = 30 #do we want to downgrade?
 
 # One of these combinations should hopefully work on your platform:
 #fourcc, ext = (cv2.VideoWriter_fourcc('D', 'I', 'V', 'X'), 'avi')
@@ -117,44 +124,66 @@ while 1:
     frameNumber = frameNumber + 1 #increment frameNumber
     print(frameNumber)
     # Get the frame.
-    ok, frame = capture.read(frame) 
+    ok, frame = capture.read(frame)
     # Bail if none.
-    if not ok or frame is None:
+    if frame is None:
+        print('Video Finished!')
+        break
+    if not ok:
         print('Bad frame in video! Aborting!')
         break
 
     #TODO: First, RGB threshold the hands out in this frame
         #we may need to do this with a mask? to preseve color in the other image
-    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     # lower_blue = np.array([210,212,210])
     # upper_blue = np.array([130,255,255])
-    # mask = cv2.inRange(frame, lower_blue, upper_blue)
-    # res = cv2.bitwise_and(frame,frame, mask= mask)
-    # cv2.imshow('frame',frame)
+
+    # To Get Only Gloves
+    lower_blue = np.array([85,70,20])
+    upper_blue = np.array([130,255,255])
+
+    # To Get Dumbbells and Gloves
+    # lower_blue = np.array([40,80,20])
+    # upper_blue = np.array([130,255,255])
+
+    # Get Arms and Gloves
+    # lower_blue = np.array([0,90,140])
+    # upper_blue = np.array([130,255,255])
+
+    # Get Arm Only Or Skin Only
+    # lower_blue = np.array([0,90,110])
+    # upper_blue = np.array([50,255,255])
+
+    mask = cv2.inRange(frame, lower_blue, upper_blue)
+    # mask = 255-mask
+    res = cv2.bitwise_and(frame,frame, mask= mask)
+    #
     # cv2.imshow('mask',mask)
     # cv2.imshow('res',res)
+    # cv2.imshow('frame',frame)
+    # cv2.imshow("h", frame[:,:,0])
+    # cv2.imshow("s", frame[:,:,1])
+    # cv2.imshow("v", frame[:,:,2])
 
-        
+
 
     #TODO: Here, do temporal threholding to remove all except the bar (non-glove part of arms will likely stay too)
-    # grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(np.float32)
-    # grayAverage = cv2.cvtColor(average, cv2.COLOR_BGR2GRAY).astype(np.float32)
-    # diffMatrix = cv2.absdiff(grayAverage, grayFrame).astype(np.float32)
+    grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    grayAverage = cv2.cvtColor(average, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    diffMatrix = cv2.absdiff(grayAverage, grayFrame).astype(np.float32)
 
-    diffMatrixRGB = cv2.absdiff(frame.astype(np.float32), average)#.max(axis=2)
-
-    diffMatrix = cv2.cvtColor(diffMatrixRGB, cv2.COLOR_BGR2GRAY)
-    print(diffMatrix)  
 
 
 #    temporalThreshold = np.zeros_like(average)
 #    temporalThreshold= cv2.threshold(diffMatrix, 50, cv2.THRESH_BINARY)
-    
+
     ##trippy af bruh
     #temporalThreshold= cv2.threshold(diffMatrix, 0, 255, cv2.THRESH_BINARY)
 
     something, temporalThreshold = cv2.threshold(diffMatrix, 15, 255, cv2.THRESH_BINARY)
-      
+    print(diffMatrix)
 
     #do temporal averaging on the first few frames of 125_5x_lf_lowres.mov
         #create comparison frame by averaging the first few of the movie
@@ -163,12 +192,23 @@ while 1:
         #profit??
 
     #TODO: Morphological Operators to remove noise
+    kernel = np.ones((10,10), np.uint8)
+    erosion = cv2.erode(mask,kernel,iterations = 1)
+    dilation = cv2.dilate(mask,kernel,iterations = 1)
+    cv2.imshow('Erosion',erosion)
+    cv2.imshow('Dilation',dilation)
+    opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    closing = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    cv2.imshow('Opening',opening)
+    cv2.imshow('Closing',closing)
+
 
     #TODO: Connected Components Analysis
         #Find the centroid of the bar. Track it's (x,y) over time.
         #Find the velocity of the centroid of the bar. Track it over time.
+    image, contours, hierarchy = cv2.findContours(frame, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
-
+    cv2.imshow('Contours', contours)
 
     ################################################################################################
     #                          Write the newly modified frame to the writer                        #
@@ -177,14 +217,13 @@ while 1:
     if writer:
         writer.write(frame)
     # Throw it up on the screen.
-    #cv2.imshow('Video', frame)    
-    #cv2.imshow('average', average.astype(np.uint8))
-    #cv2.imshow('diff matrix', diffMatrix.astype(np.uint8))
-    #cv2.imshow('Gray Average', grayAverage.astype(np.uint8))
-    #cv2.imshow('Gray Frame', grayFrame.astype(np.uint8))
-    cv2.imshow('Temporal Threshold', temporalThreshold.astype(np.uint8))
-    cv2.imshow('avg image', average.astype(np.uint8))
-    #cv2.imshow('absdiff', diffMatrix.astype(np.uint8))
+    # cv2.imshow('Video', frame)
+    # cv2.imshow('average', average.astype(np.uint8))
+    # cv2.imshow('diff matrix', diffMatrix.astype(np.uint8))
+    # cv2.imshow('Gray Average', grayAverage.astype(np.uint8))
+    # cv2.imshow('Gray Frame', grayFrame.astype(np.uint8))
+    # cv2.imshow('Temporal Threshold', temporalThreshold.astype(np.uint8))
+    # cv2.imshow('absdiff', diffMatrix.astype(np.uint8))
 
 #    pdb.set_trace()
 
