@@ -141,8 +141,12 @@ while 1:
     # upper_blue = np.array([130,255,255])
 
     # To Get Only Gloves
+    # lower_blue = np.array([85,70,20])
+    # upper_blue = np.array([130,255,255])
+
+    # To Get Only Gloves without Weights
     lower_blue = np.array([85,70,20])
-    upper_blue = np.array([130,255,255])
+    upper_blue = np.array([100,255,255])
 
     # To Get Dumbbells and Gloves
     # lower_blue = np.array([40,80,20])
@@ -160,7 +164,7 @@ while 1:
     # mask = 255-mask
     res = cv2.bitwise_and(frame,frame, mask= mask)
     #
-    # cv2.imshow('mask',mask)
+    cv2.imshow('mask',mask)
     # cv2.imshow('res',res)
     # cv2.imshow('frame',frame)
     # cv2.imshow("h", frame[:,:,0])
@@ -195,20 +199,20 @@ while 1:
     kernel = np.ones((10,10), np.uint8)
     erosion = cv2.erode(mask,kernel,iterations = 1)
     dilation = cv2.dilate(mask,kernel,iterations = 1)
-    cv2.imshow('Erosion',erosion)
-    cv2.imshow('Dilation',dilation)
+    # cv2.imshow('Erosion',erosion)
+    # cv2.imshow('Dilation',dilation)
     opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     closing = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    cv2.imshow('Opening',opening)
-    cv2.imshow('Closing',closing)
+    # cv2.imshow('Opening',opening)
+    # cv2.imshow('Closing',closing)
 
 
     #TODO: Connected Components Analysis
         #Find the centroid of the bar. Track it's (x,y) over time.
         #Find the velocity of the centroid of the bar. Track it over time.
-    image, contours, hierarchy = cv2.findContours(frame, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    # image, contours, hierarchy = cv2.findContours(frame, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
-    cv2.imshow('Contours', contours)
+    # cv2.imshow('Contours', contours)
 
     ################################################################################################
     #                          Write the newly modified frame to the writer                        #
