@@ -2,7 +2,7 @@
 #
 # File:   iSpot.py
 # Author: William Lee (and Won Chung) (w/ code taken from Matt Zucker's capture.py)
-# Date:   February, 2017 
+# Date:   February, 2017
 #
 # Written for ENGR 27 - Computer Vision
 #
@@ -31,7 +31,7 @@ input_device = None
 if len(sys.argv) > 1:
     input_filename = sys.argv[1]
     try:
-        input_device = int(input_filename) 
+        input_device = int(input_filename)
     except:
         pass
 else:
@@ -87,7 +87,7 @@ ok, currentFrame = temporalCapture.read()
 for i in range(1, 20):
     frameToAdd = currentFrame.astype(np.float32)
     average = np.add(average, currentFrame)
-    okT, currentFrame = temporalCapture.read(currentFrame) 
+    okT, currentFrame = temporalCapture.read(currentFrame)
 
      #print('calculating temporal frame ', i, 'th iteration', average)
 average = average/20
@@ -97,7 +97,7 @@ average = average/20
 
 # Now set up a VideoWriter to output video. (dependent on w, h above)
 
-fps = 30 #do we want to downgrade? 
+fps = 30 #do we want to downgrade?
 
 # One of these combinations should hopefully work on your platform:
 #fourcc, ext = (cv2.VideoWriter_fourcc('D', 'I', 'V', 'X'), 'avi')
@@ -124,7 +124,7 @@ while 1:
     frameNumber = frameNumber + 1 #increment frameNumber
     print(frameNumber)
     # Get the frame.
-    ok, frame = capture.read(frame) 
+    ok, frame = capture.read(frame)
     # Bail if none.
     if not ok or frame is None:
         print('Bad frame in video! Aborting!')
@@ -132,16 +132,39 @@ while 1:
 
     #TODO: First, RGB threshold the hands out in this frame
         #we may need to do this with a mask? to preseve color in the other image
-    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     # lower_blue = np.array([210,212,210])
     # upper_blue = np.array([130,255,255])
-    # mask = cv2.inRange(frame, lower_blue, upper_blue)
-    # res = cv2.bitwise_and(frame,frame, mask= mask)
-    # cv2.imshow('frame',frame)
-    # cv2.imshow('mask',mask)
-    # cv2.imshow('res',res)
 
-        
+    # To Get Only Gloves
+    # lower_blue = np.array([85,70,20])
+    # upper_blue = np.array([130,255,255])
+
+    # To Get Dumbbells and Gloves
+    # lower_blue = np.array([40,80,20])
+    # upper_blue = np.array([130,255,255])
+
+    # Get Arms and Gloves
+    # lower_blue = np.array([0,90,140])
+    # upper_blue = np.array([130,255,255])
+
+    # Get Bar Only
+    lower_blue = np.array([0,90,140])
+    upper_blue = np.array([130,255,255])
+
+    mask = cv2.inRange(frame, lower_blue, upper_blue)
+    mask = 255-mask
+    res = cv2.bitwise_and(frame,frame, mask= mask)
+
+    cv2.imshow('mask',mask)
+    # cv2.imshow('res',res)
+    # cv2.imshow('frame',frame)
+    # cv2.imshow("h", frame[:,:,0])
+    # cv2.imshow("s", frame[:,:,1])
+    # cv2.imshow("v", frame[:,:,2])
+
+
 
     #TODO: Here, do temporal threholding to remove all except the bar (non-glove part of arms will likely stay too)
     grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(np.float32)
@@ -152,12 +175,12 @@ while 1:
 
 #    temporalThreshold = np.zeros_like(average)
 #    temporalThreshold= cv2.threshold(diffMatrix, 50, cv2.THRESH_BINARY)
-    
+
     ##trippy af bruh
     #temporalThreshold= cv2.threshold(diffMatrix, 0, 255, cv2.THRESH_BINARY)
 
     something, temporalThreshold = cv2.threshold(diffMatrix, 15, 255, cv2.THRESH_BINARY)
-    print(diffMatrix)    
+    print(diffMatrix)
 
     #do temporal averaging on the first few frames of 125_5x_lf_lowres.mov
         #create comparison frame by averaging the first few of the movie
@@ -180,7 +203,7 @@ while 1:
     if writer:
         writer.write(frame)
     # Throw it up on the screen.
-    #cv2.imshow('Video', frame)    
+    #cv2.imshow('Video', frame)
     #cv2.imshow('average', average.astype(np.uint8))
     #cv2.imshow('diff matrix', diffMatrix.astype(np.uint8))
     #cv2.imshow('Gray Average', grayAverage.astype(np.uint8))
