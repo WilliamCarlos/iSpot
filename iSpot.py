@@ -126,7 +126,10 @@ while 1:
     # Get the frame.
     ok, frame = capture.read(frame)
     # Bail if none.
-    if not ok or frame is None:
+    if frame is None:
+        print('Video Finished!')
+        break
+    if not ok:
         print('Bad frame in video! Aborting!')
         break
 
@@ -138,8 +141,8 @@ while 1:
     # upper_blue = np.array([130,255,255])
 
     # To Get Only Gloves
-    # lower_blue = np.array([85,70,20])
-    # upper_blue = np.array([130,255,255])
+    lower_blue = np.array([85,70,20])
+    upper_blue = np.array([130,255,255])
 
     # To Get Dumbbells and Gloves
     # lower_blue = np.array([40,80,20])
@@ -150,14 +153,14 @@ while 1:
     # upper_blue = np.array([130,255,255])
 
     # Get Arm Only Or Skin Only
-    lower_blue = np.array([0,90,110])
-    upper_blue = np.array([50,255,255])
+    # lower_blue = np.array([0,90,110])
+    # upper_blue = np.array([50,255,255])
 
     mask = cv2.inRange(frame, lower_blue, upper_blue)
-    mask = 255-mask
-    # res = cv2.bitwise_and(frame,frame, mask= mask)
+    # mask = 255-mask
+    res = cv2.bitwise_and(frame,frame, mask= mask)
     #
-    cv2.imshow('mask',mask)
+    # cv2.imshow('mask',mask)
     # cv2.imshow('res',res)
     # cv2.imshow('frame',frame)
     # cv2.imshow("h", frame[:,:,0])
@@ -189,6 +192,16 @@ while 1:
         #profit??
 
     #TODO: Morphological Operators to remove noise
+    kernel = np.ones((10,10), np.uint8)
+    # erosion = cv2.erode(mask,kernel,iterations = 1)
+    # dilation = cv2.dilate(mask,kernel,iterations = 1)
+    # cv2.imshow('Erosion',erosion)
+    # cv2.imshow('Dilation',dilation)
+    opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    closing = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    cv2.imshow('Opening',opening)
+    cv2.imshow('Closing',closing)
+
 
     #TODO: Connected Components Analysis
         #Find the centroid of the bar. Track it's (x,y) over time.
@@ -203,13 +216,13 @@ while 1:
     if writer:
         writer.write(frame)
     # Throw it up on the screen.
-    #cv2.imshow('Video', frame)
-    #cv2.imshow('average', average.astype(np.uint8))
-    #cv2.imshow('diff matrix', diffMatrix.astype(np.uint8))
-    #cv2.imshow('Gray Average', grayAverage.astype(np.uint8))
-    # cv2.imshow('Gray Frame', grayFrame.astype(np.uint8))
+    # cv2.imshow('Video', frame)
+    # cv2.imshow('average', average.astype(np.uint8))
+    cv2.imshow('diff matrix', diffMatrix.astype(np.uint8))
+    cv2.imshow('Gray Average', grayAverage.astype(np.uint8))
+    cv2.imshow('Gray Frame', grayFrame.astype(np.uint8))
     # cv2.imshow('Temporal Threshold', temporalThreshold.astype(np.uint8))
-    # cv2.imshow('absdiff', diffMatrix.astype(np.uint8))
+    cv2.imshow('absdiff', diffMatrix.astype(np.uint8))
 
 #    pdb.set_trace()
 
