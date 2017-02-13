@@ -26,12 +26,10 @@ import struct
 import pdb
 import cvk2
 
-
 #Displays a message on screen, warning the user to spot the lifter
 def warnToSpot():  
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(display,'Warning: Lifter needs a spot!',(75,75), font, 1,(255,255,255),2)
-
 
 
 # Figure out what input we should load:
@@ -109,7 +107,6 @@ else:
     print('Opened', filename, 'for output.')
     writer.write(frame)
 # Loop until movie is ended or user hits ESC:
-
 
 
 ################################################################################################
@@ -298,31 +295,16 @@ while 1:
 
         #Calculate the velocity of the barcentroid at the current frame            
         position = np.subtract(position1,position2)
-        #velocity.append(np.sqrt((position[0]*position[0]+position[1]*position[1])))
         velocity.append(np.sqrt((position[0]*position[0]+position[1]*position[1])))
-        #print('actual velocity ', np.sqrt((position[0]*position[0]+position[1]*position[1])))
-        #print('velocity array: frame# ', frameNumber, ' length of array: ', len(velocity), ' velocity val ', velocity[frameNumber])
-        #velocity.append((position[0]*position[0]+position[1]*position[1]))
 
-        #pdb.set_trace()
-        #40 is the spotting aggressiveness
+        #Scalar value determining how aggressively to spot
+        decapitationVsGainsTradeoff=10
         #if velocity[len(velocity)-1] < 40:               
-        print('VELOCITY!! ', velocity[frameNumber-1])
-        if velocity[frameNumber-1] < 10:               
+        if velocity[frameNumber-1] < decapitationVsGainsTradeoff:               
             warnToSpot()
-            #print('velocity, ', velocity[frameNumber])
-        else:
-            #print('velocity, ', velocity[frameNumber])
-            print()
-            #do nothing
-    
 
-    
-    # pdb.set_trace()p
     cv2.imshow('Regions', display)
 
-    
-    # cv2.imshow('Contours', contours)
 
     ################################################################################################
     #                          Write the newly modified frame to the writer                        #
@@ -339,15 +321,9 @@ while 1:
     # cv2.imshow('Temporal Threshold', temporalThreshold.astype(np.uint8))
     # cv2.imshow('absdiff', diffMatrix.astype(np.uint8))
 
-#    pdb.set_trace()
-
-
     # Delay for 5ms and get a key
     k = cv2.waitKey(5)
     # Check for ESC hit:
     if k % 0x100 == 27:
         break
-#print('Bar centroids: ', barCentroids)
-velocity.sort(reverse=True)
-print('Velocities', velocity)
-pdb.set_trace()
+
