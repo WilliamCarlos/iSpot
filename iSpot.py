@@ -27,7 +27,7 @@ import pdb
 import cvk2
 
 #Displays a message on screen, warning the user to spot the lifter
-def warnToSpot():  
+def warnToSpot():
     font = cv2.FONT_HERSHEY_SIMPLEX
     cv2.putText(display,'Warning: Lifter needs a spot!',(75,75), font, 1,(255,255,255),2)
 
@@ -90,7 +90,7 @@ else:
 #We use the bar centroids to approximate the speed of the bar and determine if the lifter needs a spot (when the velocity is close to 0)
 barCentroids = [] #Keep track of the locations of previous bar centroids. Used to calculate bar velocity.
 velocity = [] #Stores the velocities of the bar centroids. (not actual velocity, but a relatively close measure: distance between position at time x and position at time y (not normalized for time))
-frameNumber=0; #Used to keep track of the frame number of the video 
+frameNumber=0; #Used to keep track of the frame number of the video
 while 1:
     frameNumber = frameNumber + 1 #increment frameNumber
     #print('frame number ', frameNumber) #print current frame number if desired
@@ -108,8 +108,8 @@ while 1:
     video = frame
     #convert to HSV
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        
-    # Range of colors to Get Only Gloves without Weights. Other thresholding options commented below. 
+
+    # Range of colors to Get Only Gloves without Weights. Other thresholding options commented below.
     lower_blue = np.array([85,70,20])
     upper_blue = np.array([100,255,255])
 
@@ -181,7 +181,7 @@ while 1:
     # Define the color white, pink, red (used below).
     white = (255,255,255)
     pink = (247,116,182)
-  
+
     #We expect to have 2 contours in our image (1 for each hand). Store their centroids in this array
     #so we can later access their centroids and connect them with a line. 
     centroids = []
@@ -202,16 +202,16 @@ while 1:
         cv2.line( display, cvk2.array2cv_int(mu), cvk2.array2cv_int(mu+2*b1),
                   white, 1, cv2.LINE_AA )
         cv2.line( display, cvk2.array2cv_int(mu), cvk2.array2cv_int(mu+2*b2),
-                  white, 1, cv2.LINE_AA )        
+                  white, 1, cv2.LINE_AA )
     #draw line between centroids
     cv2.line(display, cvk2.array2cv_int(centroids[0]), cvk2.array2cv_int(centroids[1]), pink, 1, cv2.LINE_AA)
 
     #calculate the midpoint between the centroids of the hands (barCentroid)
     midpoint = cvk2.array2cv_int(0.5*(centroids[0]+centroids[1]))
-    
+
     #Use barCentroids to keep track of previous bar centroids to calculate bar velocities
     barCentroids.append(midpoint)
-    
+
     #Draw the barCentroid trail
     for i in range(0,len(barCentroids)):
         #if less than 10 frames have elapsed, we set velocity to 0 and don't paint any circles
@@ -227,6 +227,7 @@ while 1:
             numCircles = numCircles-1
 
     #Calculate Velocity of the Bar (barCentroid) in this frame    
+
     if frameNumber <= 10:
         velocity.append(0) #set bar velocity to 0 if less than 10 frames in 
     else:
@@ -239,7 +240,7 @@ while 1:
             position1 = barCentroids[len(barCentroids)-1]
             position2 = barCentroids[len(barCentroids)-20]
 
-        #Calculate the velocity of the barcentroid at the current frame            
+        #Calculate the velocity of the barcentroid at the current frame
         position = np.subtract(position1,position2)
         velocity.append(np.sqrt((position[0]*position[0]+position[1]*position[1])))
 
@@ -247,7 +248,10 @@ while 1:
         decapitationVsGainsTradeoff=10
         if velocity[frameNumber-1] < decapitationVsGainsTradeoff:               
             warnToSpot()
-
+    # plt.plot(barCentroids, velocity)
+    # plt.title('Tracjectories')
+    # plt.grid(True)
+    # plt.show()
     cv2.imshow('Regions', display)
 
     ################################################################################################
